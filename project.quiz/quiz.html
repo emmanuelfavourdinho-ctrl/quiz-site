@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quiz — Chuitechma</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #1a7a3c;
+      --green-dark: #145f2e;
+      --green-mid: #22a04f;
+      --green-light: #d6f5e3;
+      --green-pale: #f2faf5;
+      --white: #ffffff;
+      --bg: #f6f8f7;
+      --ink: #111c16;
+      --ink-mid: #374f40;
+      --ink-soft: #62816e;
+      --ink-faint: #9db8a7;
+      --border: #dae8e0;
+      --border-hover: #b4d4c2;
+      --danger: #c0392b;
+      --danger-pale: #fef2f2;
+      --danger-light: #fecaca;
+      --amber: #d97706;
+      --amber-pale: #fffbeb;
+      --amber-light: #fde68a;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+
+    html { font-size: 15px; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 0% 0%, rgba(26,122,60,0.055) 0%, transparent 60%),
+                  radial-gradient(ellipse 50% 40% at 100% 100%, rgba(26,122,60,0.04) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .hidden { display: none !important; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--green-pale); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* Header */
+    .site-header {
+      position: sticky; top: 0; z-index: 200;
+      height: 60px; padding: 0 28px;
+      display: flex; align-items: center;
+      background: rgba(246,248,247,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 720px; width: 100%; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+
+    .logo-mark {
+      width: 34px; height: 34px;
+      background: var(--green); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .logo-text { font-size: 0.95rem; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+    .logo-text span { color: var(--ink-soft); font-weight: 400; }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .score-badge {
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--ink-mid);
+      background: var(--white); border: 1px solid var(--border);
+      padding: 5px 12px; border-radius: 999px;
+    }
+
+    .score-badge b { color: var(--green); }
+
+    .exit-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.78rem; font-weight: 500;
+      color: var(--ink-soft);
+      padding: 6px 13px;
+      border: 1px solid var(--border);
+      border-radius: 999px; text-decoration: none;
+      background: var(--white);
+      transition: border-color 0.18s, color 0.18s;
+    }
+    .exit-btn:hover { border-color: var(--danger); color: var(--danger); }
+    .exit-btn svg { width: 12px; height: 12px; stroke-width: 2.5; }
+
+    /* Page */
+    .page-wrapper { position: relative; z-index: 1; }
+
+    /* Quiz wrap */
+    .quiz-wrap {
+      max-width: 680px; margin: 0 auto;
+      padding: 32px 20px 72px;
+    }
+
+    /* Top row */
+    .quiz-top {
+      display: flex; align-items: center;
+      gap: 18px; margin-bottom: 22px;
+      animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .progress-section { flex: 1; }
+
+    .progress-meta {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 8px;
+    }
+
+    .progress-meta span:first-child {
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--ink-faint);
+    }
+
+    .course-pill {
+      font-size: 0.7rem; font-weight: 600;
+      padding: 3px 10px;
+      background: var(--green-pale); border: 1px solid var(--green-light);
+      color: var(--green); border-radius: 999px;
+    }
+
+    .progress-track {
+      height: 5px; background: var(--green-pale);
+      border-radius: 99px; overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green-dark), var(--green-mid));
+      border-radius: 99px;
+      transition: width 0.5s cubic-bezier(0.22,1,0.36,1);
+    }
+
+    /* Timer */
+    .timer-ring-wrap {
+      position: relative; width: 60px; height: 60px;
+      flex-shrink: 0; transition: transform 0.2s ease;
+    }
+
+    .tw-warn   { transform: scale(1.05); }
+    .tw-danger { transform: scale(1.08); animation: pulse-ring 0.5s ease infinite alternate; }
+
+    @keyframes pulse-ring {
+      from { transform: scale(1.05); }
+      to   { transform: scale(1.13); }
+    }
+
+    .timer-ring { width: 60px; height: 60px; transform: rotate(-90deg); }
+
+    .timer-bg { fill: none; stroke: var(--border); stroke-width: 4; }
+
+    .timer-arc {
+      fill: none; stroke-width: 4; stroke-linecap: round;
+      transition: stroke-dashoffset 0.9s linear, stroke 0.4s ease;
+    }
+
+    .timer-normal { stroke: var(--green); }
+    .timer-warn   { stroke: var(--amber); }
+    .timer-danger { stroke: var(--danger); }
+
+    .timer-num {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 700;
+      color: var(--ink); transition: color 0.4s;
+    }
+
+    .tw-warn   .timer-num { color: var(--amber); }
+    .tw-danger .timer-num { color: var(--danger); }
+
+    /* Question card */
+    .question-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px 24px;
+      box-shadow: 0 4px 24px rgba(26,122,60,0.07);
+      animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) 0.08s both;
+    }
+
+    .q-label {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink-faint); margin-bottom: 10px;
+    }
+
+    .q-text {
+      font-size: 1.1rem; font-weight: 600;
+      color: var(--ink); line-height: 1.5;
+      margin-bottom: 24px; letter-spacing: -0.01em;
+    }
+
+    /* Options */
+    .options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 24px; }
+
+    .option-btn {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 9px; padding: 12px 16px;
+      cursor: pointer; font-family: var(--font);
+      font-size: 0.88rem; font-weight: 500;
+      color: var(--ink-mid); text-align: left;
+      transition: border-color 0.18s, background 0.18s, color 0.18s, transform 0.15s;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--border-hover);
+      background: var(--white); color: var(--ink);
+      transform: translateX(3px);
+    }
+
+    .opt-letter {
+      min-width: 30px; height: 30px; flex-shrink: 0;
+      border-radius: 7px;
+      background: var(--white); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.73rem; font-weight: 700;
+      color: var(--ink-faint);
+      transition: all 0.18s;
+    }
+
+    .option-btn:hover:not(:disabled) .opt-letter {
+      background: var(--green-pale); border-color: var(--green-light);
+      color: var(--green);
+    }
+
+    /* Correct */
+    .option-btn.opt-correct {
+      background: var(--green-pale); border-color: var(--green-light); color: var(--green);
+    }
+    .option-btn.opt-correct .opt-letter {
+      background: var(--green); border-color: var(--green); color: var(--white);
+    }
+
+    /* Wrong */
+    .option-btn.opt-wrong {
+      background: var(--danger-pale); border-color: var(--danger-light); color: var(--danger);
+    }
+    .option-btn.opt-wrong .opt-letter {
+      background: var(--danger); border-color: var(--danger); color: var(--white);
+    }
+
+    .option-btn:disabled { cursor: not-allowed; }
+
+    /* Footer */
+    .q-footer {
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+
+    .hint-text { font-size: 0.78rem; color: var(--ink-faint); font-weight: 500; }
+
+    .btn-next {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 20px;
+      background: var(--green); color: var(--white);
+      font-family: var(--font); font-size: 0.85rem; font-weight: 600;
+      border: none; border-radius: 8px; cursor: pointer;
+      box-shadow: 0 2px 10px rgba(26,122,60,0.22);
+      transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+    }
+    .btn-next:hover:not(:disabled) {
+      background: var(--green-dark); transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(26,122,60,0.3);
+    }
+    .btn-next:active { transform: scale(0.98); }
+    .btn-next:disabled {
+      background: var(--border); color: var(--ink-faint);
+      box-shadow: none; cursor: not-allowed;
+    }
+    .btn-next svg { width: 13px; height: 13px; stroke-width: 2.5; }
+
+    /* ══ Result screen ══ */
+    .result-wrap {
+      max-width: 540px; margin: 0 auto;
+      padding: 44px 20px 72px;
+    }
+
+    .result-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 40px 32px;
+      text-align: center;
+      box-shadow: 0 4px 32px rgba(26,122,60,0.08);
+      position: relative; overflow: hidden;
+      animation: scaleIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .result-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--green-dark), var(--green-mid));
+    }
+
+    .result-icon {
+      width: 64px; height: 64px; margin: 0 auto 16px;
+      background: var(--green-pale); border: 1px solid var(--green-light);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--green);
+      animation: bounceIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .result-icon svg { width: 28px; height: 28px; stroke-width: 1.75; }
+
+    @keyframes bounceIn {
+      from { transform: scale(0.4); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .result-heading {
+      font-size: 1.3rem; font-weight: 700;
+      color: var(--ink); letter-spacing: -0.02em; margin-bottom: 4px;
+    }
+
+    .result-sub { font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 24px; }
+
+    .result-score-row {
+      display: flex; align-items: baseline;
+      justify-content: center; gap: 4px; margin-bottom: 4px;
+    }
+
+    .result-big {
+      font-size: 4rem; font-weight: 800;
+      color: var(--green); line-height: 1; letter-spacing: -0.04em;
+    }
+
+    .result-denom { font-size: 1.3rem; color: var(--ink-faint); font-weight: 600; }
+
+    .result-pct { font-size: 0.85rem; font-weight: 600; color: var(--ink-faint); margin-bottom: 28px; }
+
+    /* Meta row */
+    .result-meta-row {
+      display: flex; justify-content: center;
+      gap: 8px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+
+    .result-meta-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px 18px; min-width: 88px;
+    }
+
+    .meta-icon { color: var(--green); }
+    .meta-icon svg { width: 16px; height: 16px; stroke-width: 1.75; }
+
+    .meta-label {
+      font-size: 0.63rem; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--ink-faint); font-weight: 600;
+    }
+
+    .meta-val { font-size: 0.88rem; color: var(--ink); font-weight: 700; }
+
+    /* Breakdown */
+    .breakdown-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 20px;
+    }
+
+    .bd-item {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px;
+    }
+
+    .bd-label { font-size: 0.78rem; font-weight: 500; color: var(--ink-mid); }
+    .bd-score { font-size: 0.85rem; font-weight: 700; }
+
+    .result-message {
+      font-size: 0.83rem; color: var(--ink-soft);
+      line-height: 1.65; margin-bottom: 24px;
+    }
+
+    .result-actions { display: flex; flex-direction: column; gap: 9px; }
+
+    .btn-retry {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; padding: 11px 24px;
+      background: var(--green); color: var(--white);
+      font-family: var(--font); font-size: 0.88rem; font-weight: 600;
+      border: none; border-radius: 9px; cursor: pointer;
+      box-shadow: 0 2px 12px rgba(26,122,60,0.22);
+      transition: background 0.18s, transform 0.15s;
+    }
+    .btn-retry:hover { background: var(--green-dark); transform: translateY(-1px); }
+
+    .btn-dash {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; padding: 11px 24px;
+      background: var(--white); color: var(--ink-mid);
+      font-family: var(--font); font-size: 0.88rem; font-weight: 600;
+      border: 1px solid var(--border); border-radius: 9px; cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.18s, color 0.18s, background 0.18s;
+    }
+    .btn-dash:hover { border-color: var(--green); color: var(--green); background: var(--green-pale); }
+
+    /* Footer */
+    .site-footer {
+      position: relative; z-index: 1;
+      text-align: center; padding: 18px;
+      font-size: 0.73rem; color: var(--ink-faint);
+      border-top: 1px solid var(--border);
+      background: var(--white);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @media (max-width: 480px) {
+      .question-card { padding: 22px 18px 18px; }
+      .q-text { font-size: 1rem; }
+      .result-card { padding: 28px 20px; }
+      .result-big { font-size: 3rem; }
+      .breakdown-grid { grid-template-columns: 1fr; }
+    }
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.row {
+    display: flex;
+    gap: 20px;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    .row {
+        flex-direction: column;
+    }
+}
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <span class="logo-text">Chui<span>techma</span></span>
+      </a>
+      <div class="header-right">
+        <span class="score-badge">Score: <b id="live-score">0</b>/14</span>
+        <a href="dashboard.html" class="exit-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Exit
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Quiz screen -->
+  <main class="page-wrapper" id="quiz-screen">
+    <div class="quiz-wrap">
+
+      <div class="quiz-top">
+        <div class="progress-section">
+          <div class="progress-meta">
+            <span id="q-counter">Question 1 of 14</span>
+            <span class="course-pill" id="course-pill">Web Development</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="timer-ring-wrap" id="timer-wrap">
+          <svg class="timer-ring" viewBox="0 0 64 64">
+            <circle class="timer-bg" cx="32" cy="32" r="28"/>
+            <circle class="timer-arc timer-normal" id="timer-arc" cx="32" cy="32" r="28"
+                    stroke-dasharray="175.9" stroke-dashoffset="0"/>
+          </svg>
+          <span class="timer-num" id="timer-num">30</span>
+        </div>
+      </div>
+
+      <div class="question-card" id="question-card">
+        <div class="q-label" id="q-label">Q1</div>
+        <h2 class="q-text" id="q-text">Loading…</h2>
+        <div class="options" id="options"></div>
+        <div class="q-footer">
+          <span class="hint-text" id="hint-text">Choose an answer to continue</span>
+          <button class="btn-next" id="next-btn" onclick="nextQuestion()" disabled>
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Result screen -->
+  <div id="result-screen" class="hidden">
+    <main class="page-wrapper">
+      <div class="result-wrap">
+        <div class="result-card">
+
+          <div class="result-icon" id="result-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M6.5 3h11l1 7a5.5 5.5 0 0 1-11 0l1-7z"/><path d="M3 3h3.5l-1 7M20.5 3H17l1 7"/></svg>
+          </div>
+
+          <h2 class="result-heading">Quiz Complete</h2>
+          <p class="result-sub" id="result-sub">Well done!</p>
+
+          <div class="result-score-row">
+            <span class="result-big" id="result-big">0</span>
+            <span class="result-denom">/14</span>
+          </div>
+          <div class="result-pct" id="result-pct">0%</div>
+
+          <div class="result-meta-row">
+            <div class="result-meta-item">
+              <span class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </span>
+              <span class="meta-label">Time taken</span>
+              <span class="meta-val" id="meta-time">—</span>
+            </div>
+            <div class="result-meta-item">
+              <span class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </span>
+              <span class="meta-label">Avg per Q</span>
+              <span class="meta-val" id="meta-avg-time">—</span>
+            </div>
+            <div class="result-meta-item">
+              <span class="meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </span>
+              <span class="meta-label">Timed out</span>
+              <span class="meta-val" id="meta-timeout">0</span>
+            </div>
+          </div>
+
+          <div class="breakdown-grid" id="breakdown-grid"></div>
+
+          <p class="result-message" id="result-message"></p>
+
+          <div class="result-actions">
+            <button class="btn-retry" onclick="restartQuiz()">
+              Try Again
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.09"/></svg>
+            </button>
+            <a href="dashboard.html" class="btn-dash">
+              View Dashboard
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <p>Chuitechma Quiz © 2025</p>
+  </footer>
+
+  <script>
+  const questions = [
+    { course:'Web Development',    courseKey:'web',  question:'What does HTML stand for?', options:['Hyper Text Markup Language','High Tech Modern Language','Hyperlink and Text Management Language','Home Tool Markup Language'], answer:0 },
+    { course:'Web Development',    courseKey:'web',  question:'Which CSS property changes the text color of an element?', options:['font-color','text-color','color','foreground-color'], answer:2 },
+    { course:'Web Development',    courseKey:'web',  question:'What does the <a> tag do in HTML?', options:['Displays an image','Creates a hyperlink','Makes text bold','Defines a table'], answer:1 },
+    { course:'Web Development',    courseKey:'web',  question:'Which JavaScript method selects an HTML element by its ID?', options:['document.query()','document.getElement()','document.getElementById()','document.selectById()'], answer:2 },
+    { course:'Digital Electronics', courseKey:'elec', question:'What is the output of an AND gate when both inputs are 1?', options:['0','1','Undefined','Depends on voltage'], answer:1 },
+    { course:'Digital Electronics', courseKey:'elec', question:'Which number system uses only the digits 0 and 1?', options:['Octal','Hexadecimal','Decimal','Binary'], answer:3 },
+    { course:'Digital Electronics', courseKey:'elec', question:'What is the decimal equivalent of binary 1010?', options:['8','10','12','14'], answer:1 },
+    { course:'Digital Electronics', courseKey:'elec', question:'Which logic gate gives output 1 only when all inputs are 0?', options:['AND gate','OR gate','NOR gate','NAND gate'], answer:2 },
+    { course:'C Programming',      courseKey:'c',    question:'Which symbol ends a statement in C?', options:[':','.', ';','#'], answer:2 },
+    { course:'C Programming',      courseKey:'c',    question:'What is the correct way to print "Hello" in C?', options:['print("Hello");','printf("Hello");','echo("Hello");','Console.Write("Hello");'], answer:1 },
+    { course:'C Programming',      courseKey:'c',    question:'Which data type stores a single character in C?', options:['string','char','letter','text'], answer:1 },
+    { course:'Operating Systems',  courseKey:'os',   question:'What does CPU stand for?', options:['Central Processing Unit','Computer Personal Unit','Core Processing Utility','Central Program Unit'], answer:0 },
+    { course:'Operating Systems',  courseKey:'os',   question:'Which of the following is an Operating System?', options:['Microsoft Word','Google Chrome','Ubuntu Linux','Adobe Photoshop'], answer:2 },
+    { course:'Operating Systems',  courseKey:'os',   question:'What does RAM stand for?', options:['Read Allocated Memory','Random Access Memory','Rapid Application Memory','Remote Access Module'], answer:1 },
+  ];
+
+  let idx=0, score=0, selected=null, timeouts=0, timerInterval=null, timeLeft=30;
+  let quizStart=Date.now(), questionStart=Date.now(), timingsArr=[];
+  const TIMER_MAX=30, CIRCUMFERENCE=175.9;
+  const courseScores={web:{c:0,t:0},elec:{c:0,t:0},c:{c:0,t:0},os:{c:0,t:0}};
+
+  function loadQuestion() {
+    selected=null;
+    const q=questions[idx];
+    const pct=(idx/questions.length)*100;
+    document.getElementById('progress-fill').style.width=pct+'%';
+    document.getElementById('q-counter').textContent='Question '+(idx+1)+' of '+questions.length;
+    document.getElementById('course-pill').textContent=q.course;
+    document.getElementById('q-label').textContent='Q'+(idx+1);
+    document.getElementById('q-text').textContent=q.question;
+
+    const letters=['A','B','C','D'];
+    const container=document.getElementById('options');
+    container.innerHTML='';
+    q.options.forEach((opt,i)=>{
+      const btn=document.createElement('button');
+      btn.className='option-btn';
+      btn.innerHTML=`<span class="opt-letter">${letters[i]}</span><span class="opt-text">${opt}</span>`;
+      btn.addEventListener('click',()=>pickAnswer(i,btn));
+      container.appendChild(btn);
+    });
+
+    const nextBtn=document.getElementById('next-btn');
+    nextBtn.disabled=true;
+    nextBtn.innerHTML=idx===questions.length-1
+      ? 'See Results <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>'
+      : 'Next <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+    document.getElementById('hint-text').textContent='Choose an answer to continue';
+
+    const card=document.getElementById('question-card');
+    card.style.animation='none'; card.offsetHeight;
+    card.style.animation='fadeUp 0.35s cubic-bezier(0.22,1,0.36,1) both';
+
+    startTimer(); questionStart=Date.now();
+  }
+
+  function startTimer() {
+    clearInterval(timerInterval); timeLeft=TIMER_MAX;
+    updateTimerUI(timeLeft); setTimerColor('normal');
+    timerInterval=setInterval(()=>{
+      timeLeft--;
+      updateTimerUI(timeLeft);
+      if(timeLeft<=10) setTimerColor('warn');
+      if(timeLeft<=5)  setTimerColor('danger');
+      if(timeLeft<=0){ clearInterval(timerInterval); onTimeOut(); }
+    },1000);
+  }
+
+  function updateTimerUI(t) {
+    document.getElementById('timer-num').textContent=t;
+    const offset=CIRCUMFERENCE*(1-t/TIMER_MAX);
+    document.getElementById('timer-arc').style.strokeDashoffset=offset;
+  }
+
+  function setTimerColor(state) {
+    document.getElementById('timer-arc').className='timer-arc timer-'+state;
+    document.getElementById('timer-wrap').className='timer-ring-wrap tw-'+state;
+  }
+
+  function onTimeOut() {
+    timeouts++;
+    const allBtns=document.querySelectorAll('.option-btn');
+    allBtns.forEach(b=>b.disabled=true);
+    allBtns[questions[idx].answer].classList.add('opt-correct');
+    document.getElementById('hint-text').textContent='Time\'s up! Correct answer highlighted.';
+    document.getElementById('next-btn').disabled=false;
+    courseScores[questions[idx].courseKey].t++;
+    timingsArr.push(TIMER_MAX); selected=-1;
+  }
+
+  function pickAnswer(chosenIdx,btn) {
+    if(selected!==null) return;
+    clearInterval(timerInterval);
+    const elapsed=Math.round((Date.now()-questionStart)/1000);
+    timingsArr.push(elapsed); selected=chosenIdx;
+    const allBtns=document.querySelectorAll('.option-btn');
+    allBtns.forEach(b=>b.disabled=true);
+    const correct=questions[idx].answer;
+    courseScores[questions[idx].courseKey].t++;
+    if(chosenIdx===correct){
+      btn.classList.add('opt-correct'); score++;
+      courseScores[questions[idx].courseKey].c++;
+      document.getElementById('hint-text').textContent='Correct!';
+    } else {
+      btn.classList.add('opt-wrong');
+      allBtns[correct].classList.add('opt-correct');
+      document.getElementById('hint-text').textContent='Incorrect — correct answer highlighted.';
+    }
+    document.getElementById('live-score').textContent=score;
+    document.getElementById('next-btn').disabled=false;
+  }
+
+  function nextQuestion() {
+    if(selected===null) return;
+    idx++;
+    if(idx>=questions.length) showResults(); else loadQuestion();
+  }
+
+  function showResults() {
+    clearInterval(timerInterval);
+    const totalSecs=Math.round((Date.now()-quizStart)/1000);
+    const avgSecs=Math.round(timingsArr.reduce((a,b)=>a+b,0)/timingsArr.length);
+    const pct=Math.round((score/questions.length)*100);
+    document.getElementById('progress-fill').style.width='100%';
+    document.getElementById('result-big').textContent=score;
+    document.getElementById('result-pct').textContent=pct+'% score';
+    document.getElementById('meta-time').textContent=formatTime(totalSecs);
+    document.getElementById('meta-avg-time').textContent=avgSecs+'s';
+    document.getElementById('meta-timeout').textContent=timeouts;
+
+    const user=JSON.parse(localStorage.getItem('cq_user')||'{}');
+    document.getElementById('result-sub').textContent='Well done, '+(user.fullname||user.username||'Student')+'!';
+
+    let msg;
+    if(pct>=85) msg='Excellent! You have a strong grasp of all 4 subjects.';
+    else if(pct>=60) msg='Good work! Review what you missed and aim even higher.';
+    else if(pct>=40) msg='Not bad — revisit your notes and try again!';
+    else msg='Keep going! Study the material and attempt again.';
+    document.getElementById('result-message').textContent=msg;
+
+    const bdEl=document.getElementById('breakdown-grid');
+    bdEl.innerHTML='';
+    const subjects=[
+      {key:'web', label:'Web Dev', total:4},
+      {key:'elec',label:'Electronics',total:4},
+      {key:'c',   label:'C Programming',total:3},
+      {key:'os',  label:'Operating Systems',total:3},
+    ];
+    subjects.forEach(s=>{
+      const got=courseScores[s.key].c, tot=courseScores[s.key].t;
+      const p=tot>0?Math.round((got/tot)*100):0;
+      const clr=p>=75?'var(--green)':p>=50?'var(--amber)':'var(--danger)';
+      const div=document.createElement('div');
+      div.className='bd-item';
+      div.innerHTML=`<span class="bd-label">${s.label}</span><span class="bd-score" style="color:${clr}">${got}/${tot}</span>`;
+      bdEl.appendChild(div);
+    });
+
+    const scores=JSON.parse(localStorage.getItem('cq_scores')||'[]');
+    const dateStr=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    scores.push({score,date:dateStr,duration:formatTime(totalSecs),breakdown:{web:courseScores.web.c,elec:courseScores.elec.c,c:courseScores.c.c,os:courseScores.os.c}});
+    localStorage.setItem('cq_scores',JSON.stringify(scores));
+
+    document.getElementById('quiz-screen').style.display='none';
+    document.getElementById('result-screen').classList.remove('hidden');
+  }
+
+  function restartQuiz() {
+    idx=0; score=0; selected=null; timeouts=0; timingsArr=[];
+    quizStart=Date.now();
+    Object.keys(courseScores).forEach(k=>{courseScores[k].c=0;courseScores[k].t=0;});
+    document.getElementById('live-score').textContent='0';
+    document.getElementById('quiz-screen').style.display='';
+    document.getElementById('result-screen').classList.add('hidden');
+    loadQuestion();
+  }
+
+  function formatTime(secs) {
+    return Math.floor(secs/60).toString().padStart(2,'0')+':'+((secs%60).toString().padStart(2,'0'));
+  }
+
+  loadQuestion();
+  </script>
+</body>
+</html>
